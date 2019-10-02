@@ -55,7 +55,7 @@
         android:ems="10"
         android:gravity="center"
         android:hint="예)MS20659-138"
-        android:textColorHint="#ffffff"
+        android:textColorHint="#80ffffff"
         android:inputType="textPersonName"
         android:textColor="#ffffff"
         android:textSize="25sp"
