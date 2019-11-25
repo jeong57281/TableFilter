@@ -4,13 +4,38 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/backgroundcolor"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
+    <TextView
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
+        android:textSize="50dp"
+        android:gravity="center"
+        android:text="@string/app_name" />
+
+    <!--
+    <Button
+        android:id="@+id/search_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
         android:text="검색 화면" />
+        -->
+
+    <Button
+        android:id="@+id/file_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text=".xls 불러오기" />
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="최근 파일" />
+
+    <ListView
+        android:id="@+id/recent_list"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>
