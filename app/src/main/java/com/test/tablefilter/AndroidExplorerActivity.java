@@ -129,17 +129,18 @@ public class AndroidExplorerActivity extends ListActivity {
              */
 
             String fileName;
-            String ext3Name, ext4Name;
+            String extName;
 
             fileName = file.getName();
 
-            ext3Name = fileName.substring(fileName.length() - 3);
-            ext4Name = fileName.substring(fileName.length() - 4);
-            if(ext3Name.equals((String) "xls") || ext4Name.equals((String) "xlsx")){
+            extName = fileName.substring(fileName.length() - 3);
+            if(extName.equals((String) "xls")){
                 /* new Intent("현재 activity, 실행할 activity);
                 * getApplicationContext() 와 AndroidExplorerActivity.this 는
                 * 같은 의미일까요? */
                 Intent xlsSetting = new Intent(AndroidExplorerActivity.this, xlsSetting.class);
+                xlsSetting.putExtra("fileName", fileName);
+                xlsSetting.putExtra("filePath", path.get(position));
                 startActivity(xlsSetting);
             }
 

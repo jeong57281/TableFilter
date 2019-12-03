@@ -16,46 +16,137 @@
         android:layout_weight="1" />
 
     <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:text="파일명 : "
-        android:layout_weight="1" />
+        android:id="@+id/tv_fileName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="파일명 : " />
 
-    <TextView
-        android:layout_width="fill_parent"
+    <ImageView
+        android:id="@+id/sample_image"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:text="엑셀 미리보기 파일"
         android:layout_weight="5" />
 
-    <TextView
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:text="표가 추가되는 행, 열 값을 입력"
-        android:layout_weight="1" />
+        android:layout_weight="1" >
+
+        <Button
+            android:id="@+id/left_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="◀" />
+
+        <Button
+            android:id="@+id/down_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="▼" />
+
+        <Button
+            android:id="@+id/up_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="▲" />
+
+        <Button
+            android:id="@+id/right_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="▶" />
+
+        <Button
+            android:id="@+id/first_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⇱" />
+
+        <Button
+            android:id="@+id/last_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⇲" />
+
+    </LinearLayout>
 
     <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:text="행:"
-        android:layout_weight="1" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="테이블의 시작 행, 열 값을 입력" />
 
-    <EditText
-        android:id="@+id/rowEdit"
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="행:"
+            android:layout_weight="1" />
+
+        <EditText
+            android:id="@+id/rowEdit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="열:"
+            android:layout_weight="1" />
+
+        <EditText
+            android:id="@+id/colEdit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+    </LinearLayout>
 
     <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:text="열:"
-        android:layout_weight="1" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="테이블의 마지막 행, 열 값을 입력" />
 
-    <EditText
-        android:id="@+id/colEdit"
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="행:"
+            android:layout_weight="1" />
+
+        <EditText
+            android:id="@+id/final_rowEdit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="열:"
+            android:layout_weight="1" />
+
+        <EditText
+            android:id="@+id/final_colEdit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+    </LinearLayout>
 
     <Button
         android:id="@+id/search_btn"
