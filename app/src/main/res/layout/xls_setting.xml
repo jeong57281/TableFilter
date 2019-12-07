@@ -93,7 +93,7 @@
             android:layout_weight="1" />
 
         <EditText
-            android:id="@+id/rowEdit"
+            android:id="@+id/rowEdit_start"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
@@ -105,13 +105,13 @@
             android:layout_weight="1" />
 
         <EditText
-            android:id="@+id/colEdit"
+            android:id="@+id/colEdit_start"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
     </LinearLayout>
-
+<!--
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -129,7 +129,7 @@
             android:layout_weight="1" />
 
         <EditText
-            android:id="@+id/final_rowEdit"
+            android:id="@+id/rowEdit_end"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
@@ -141,12 +141,13 @@
             android:layout_weight="1" />
 
         <EditText
-            android:id="@+id/final_colEdit"
+            android:id="@+id/colEdit_end"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
     </LinearLayout>
+    -->
 
     <Button
         android:id="@+id/search_btn"

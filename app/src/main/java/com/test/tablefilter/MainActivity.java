@@ -21,11 +21,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /* Storage READ 권한 획득 */
+        /* Storage READ 권한 획득
+        api 23 이하에서는 항상 권한이 부여되므로 필요가 없다.
+        s4 에서 테스트할 경우에는 주석처리
         requestPermissions(new String[]
                         {Manifest.permission.READ_EXTERNAL_STORAGE,
                          Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 2);
+         */
 
         /*
         Button search_btn = (Button) findViewById(R.id.search_button);
