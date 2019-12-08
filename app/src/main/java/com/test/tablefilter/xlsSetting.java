@@ -391,6 +391,8 @@ public class xlsSetting extends AppCompatActivity {
                 Log.d("merge_all_col_size", Integer.toString(merge_all_col_size));
                 Log.d("merge_text_loc_size", Integer.toString(merge_TopLeft_col_size + (merge_all_col_size / 2) + col_index_size));
 
+                /* 병합된 데이터 영역중 topLeft 를 제외한 나머지 셀에다 같은 값 입력해주기 (write 작업을 하므로 원본을 따로 저장해둘지 생각해보기) */
+
                 /* 병합 셀 데이터 그리기 */
                 paint.setColor(Color.BLACK);
                 paint.setStyle(Paint.Style.FILL);
