@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.xml.transform.Result;
 
+import jxl.Range;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.WorkbookSettings;
@@ -30,6 +31,8 @@ public class searchActivity extends AppCompatActivity {
     Workbook workbook = null;
     Sheet sheet = null;
     String[][] excelArray;
+    Range range[] = null;
+    userRange[] userRange = null;
 
     // view
     Button btnSearch;
@@ -46,6 +49,10 @@ public class searchActivity extends AppCompatActivity {
     // 전달받은 (표의)좌표값
     int row_start, col_start;
     int row_end, col_end;
+
+    /* 실제 .xls sheet 의 최대 행, 열 개수 */
+    int xls_row_max_count;
+    int xls_col_max_count;
 
     // 전달받은 파일 경로
     String filePath;
@@ -123,26 +130,44 @@ public class searchActivity extends AppCompatActivity {
             row_end = sheet.getRows();
             col_end = sheet.getColumns();
 
-            int table_row_count = row_end - row_start;
-            int table_col_count = col_end - col_start;
+            // 불러온 엑셀 데이터의 최대 행, 열 값
+            xls_row_max_count = sheet.getRows();
+            xls_col_max_count = sheet.getColumns();
+            Log.d("xls_row_max_count", Integer.toString(sheet.getRows()));
+            Log.d("xls_col_max_count", Integer.toString(sheet.getColumns()));
 
-            // java 배열은 순서대로 행, 열
-            excelArray = new String[table_row_count][table_col_count];
+            // xls 데이터를 담을 array 객체 생성
+            excelArray = new String[xls_row_max_count][xls_col_max_count];
 
-            for (int row = row_start; row < row_end; row++) {
-                for (int col = col_start; col < col_end; col++) {
+            for (int row = 0; row < xls_row_max_count; row++) {
+                for (int col = 0; col < xls_col_max_count; col++) {
                     Log.d("table row", Integer.toString(row));
                     Log.d("table col", Integer.toString(col));
                     // getCell 은 열, 행 순 (좌표 개념)
                     String cell_value = sheet.getCell(col, row).getContents();
-                    excelArray[row - row_start][col - col_start] = cell_value;
-                    Log.d("sheet value", sheet.getCell(col, row).getContents());
+                    excelArray[row][col] = cell_value;
                 }
             }
 
             for (int row = row_start + 1; row < row_end; row++) {
-                String cell_value = excelArray[row - row_start][0];
+                String cell_value = excelArray[row][col_start];
                 SearchList.add(cell_value);
+                Log.d("cell", cell_value);
+            }
+
+            // 병합 셀 Range 객체 range 에 저장
+            range = sheet.getMergedCells();
+            userRange = new userRange[range.length];
+
+            int count = 0;
+            for(Range rg : range){
+                userRange[count] = new userRange(); // 객체 배열을 사용할 때 100 번 주의 !!!
+                userRange[count].setTopLeftRow(rg.getTopLeft().getRow());
+                userRange[count].setTopLeftColumn(rg.getTopLeft().getColumn());
+                userRange[count].setBottomRightRow(rg.getBottomRight().getRow());
+                userRange[count].setBottomRightColumn(rg.getBottomRight().getColumn());
+                userRange[count].setTopLeftContents(rg.getTopLeft().getContents());
+                count++;
             }
 
         } catch (IOException e){
@@ -160,15 +185,60 @@ public class searchActivity extends AppCompatActivity {
         // row, col 의 시작(start) 좌표는 0, 0
         // 1씩 값을 더해 (1, 0), (0, 1) 좌표를 이동
         for (int row = row_start + 1; row < row_end; row++) {
-            String rowItem = excelArray[row - row_start][0];
+            String rowItem = excelArray[row][col_start];
             // 대소문자 구분 없이 입력된 값을 받아 비교
             Log.d("rowItem", rowItem);
             if (rowItem.equals(word) || rowItem.toLowerCase().equals(word)) {
                 for(int col = col_start + 1; col < col_end; col++){
-                    String colItem = excelArray[0][col - col_start];
-                    ResultList.add(colItem);
-                    String colValue = excelArray[row - row_start][col - col_start];
-                    ResultList.add(colValue);
+                    /* item 과 value 값을 찾는 부분에서, 만약 빈 값이 출력되면 해당 셀의 위치가 병합된 셀인지를
+                    판단하고 여부에 따라 병합된 셀의 해당 값으로 반환
+                    판단 기준 : row, col 의 쌍이 모든 병합 셀 영역과 비교하여 일치할 경우
+                     */
+                    String colItem = excelArray[row_start][col];
+                    if(colItem.equals("")){
+                        for(userRange userRange : userRange){
+                            // mergeRow 와 mergeCol 은 count 개념, getRow 와 getColumn 은 셀 개념 : 반대
+                            for(int mergeRow = userRange.getTopLeftRow(); mergeRow <= userRange.getBottomRightRow(); mergeRow++){
+                                for(int mergeCol = userRange.getTopLeftColumn(); mergeCol <= userRange.getBottomRightColumn(); mergeCol++){
+                                   /*
+                                  Log.d("mergeRow", Integer.toString(mergeRow));
+                                  Log.d("mergevs", Integer.toString(row));
+                                  Log.d("mergeCol", Integer.toString(mergeCol));
+                                  Log.d("mergevs", Integer.toString(col));
+                                    */
+                                    if(mergeRow == row_start && mergeCol == col){
+                                        ResultList.add(userRange.getTopLeftContents());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        ResultList.add(colItem);
+                    }
+
+                    String colValue = excelArray[row][col];
+                    if(colValue.equals("")){
+                       for(userRange userRange : userRange){
+                           // mergeRow 와 mergeCol 은 count 개념, getRow 와 getColumn 은 셀 개념 : 반대
+                           for(int mergeRow = userRange.getTopLeftRow(); mergeRow <= userRange.getBottomRightRow(); mergeRow++){
+                               for(int mergeCol = userRange.getTopLeftColumn(); mergeCol <= userRange.getBottomRightColumn(); mergeCol++){
+                                   /*
+                                  Log.d("mergeRow", Integer.toString(mergeRow));
+                                  Log.d("mergevs", Integer.toString(row));
+                                  Log.d("mergeCol", Integer.toString(mergeCol));
+                                  Log.d("mergevs", Integer.toString(col));
+                                    */
+                                  if(mergeRow == row && mergeCol == col){
+                                      ResultList.add(userRange.getTopLeftContents());
+                                  }
+                              }
+                           }
+                       }
+                    }
+                    else{
+                        ResultList.add(colValue);
+                    }
                 }
                 tvStatus.setText("항목을 찾았습니다.");
                 flag = true;

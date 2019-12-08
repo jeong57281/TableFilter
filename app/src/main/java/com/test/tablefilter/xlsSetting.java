@@ -262,7 +262,6 @@ public class xlsSetting extends AppCompatActivity {
         for (i = 0; i < col_count; i++) {
             for (j = 0; j < row_count; j++) {
                 excelload = excelArray[j + row_move_count][i + col_move_count];
-                Log.d("hello world", excelload);
                 // 셀에 값이 있을 경우
                 if(!excelload.equals("")){
                     /* 배경 셀 그리기 */
@@ -365,9 +364,8 @@ public class xlsSetting extends AppCompatActivity {
             int merge_TopLeft_row_size = (rg.getTopLeftColumn() - col_move_count) * row_size;
             int merge_TopLeft_col_size = (rg.getTopLeftRow() - row_move_count) * col_size;
 
-            /* 병합된 topLeft, bottomRight Cell 은 병합된 쉘에 함께 포함되어 있기 때문에 +1 을 해주어야 함. */
-            int merge_all_row_count = rg.getBottomRightColumn() - rg.getTopLeftColumn() + 1;
-            int merge_all_col_count = rg.getBottomRightRow() - rg.getTopLeftRow() + 1;
+            int merge_all_row_count = rg.getMergeRowCount();
+            int merge_all_col_count = rg.getMergeColCount();
 
             int merge_all_row_size = merge_all_row_count * row_size;
             int merge_all_col_size = merge_all_col_count * col_size;
