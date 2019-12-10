@@ -8,9 +8,11 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -19,6 +21,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import jxl.Cell;
 import jxl.Range;
@@ -37,6 +41,9 @@ public class xlsSetting extends AppCompatActivity {
     Button first_btn;
     Button last_btn;
     TextView tv_fileName;
+    Spinner RowSpinner, ColSpinner;
+
+    List<String> RowList, ColList;
 
     // intent
     Intent intent, intent2;
@@ -103,16 +110,31 @@ public class xlsSetting extends AppCompatActivity {
         tv_fileName = (TextView) findViewById(R.id.tv_fileName);
         tv_fileName.setText("파일명 : " + fileName);
 
+        // spinner
+        RowSpinner = (Spinner) findViewById(R.id.rowSpinner);
+        ColSpinner = (Spinner) findViewById(R.id.colSpinner);
+        //rowEdit_end = (EditText) findViewById(R.id.rowEdit_end);
+        //colEdit_end = (EditText) findViewById(R.id.colEdit_end);
+
+        RowList = new ArrayList<>();
+        ColList = new ArrayList<>();
+
         // excel 데이터 배열에 불러오기
         Excel();
 
-        /* 미리보기 첫 호출 */
+        // 미리보기 첫 호출
         Preview_Execl("none");
 
-        rowEdit_start = (EditText) findViewById(R.id.rowEdit_start);
-        //rowEdit_end = (EditText) findViewById(R.id.rowEdit_end);
-        colEdit_start = (EditText) findViewById(R.id.colEdit_start);
-        //colEdit_end = (EditText) findViewById(R.id.colEdit_end);
+        // spinner를 연결하기 위해 사용되는 어댑터
+        ArrayAdapter<String> RowAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, RowList);
+
+        ArrayAdapter<String> ColAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, ColList);
+
+        // 행, 열 의 spinner 에 List 를 연결
+        RowSpinner.setAdapter(RowAdapter);
+        ColSpinner.setAdapter(ColAdapter);
 
         btn = (Button) findViewById(R.id.search_btn);
         btn.setOnClickListener(new View.OnClickListener() {
@@ -123,9 +145,9 @@ public class xlsSetting extends AppCompatActivity {
                 intent2.putExtra("filePath", filePath);
 
                 /* 입력한 좌표값을 전달 */
-                row_start = Integer.parseInt(rowEdit_start.getText().toString());
+                row_start = Integer.parseInt(RowSpinner.getSelectedItem().toString()) - 1;
                 //row_end = Integer.parseInt(rowEdit_end.getText().toString());
-                col_start = Integer.parseInt(colEdit_start.getText().toString());
+                col_start = Integer.parseInt(ColSpinner.getSelectedItem().toString()) - 1;
                 //col_end = Integer.parseInt(colEdit_end.getText().toString());
 
                 intent2.putExtra("row_start", row_start);
@@ -133,7 +155,8 @@ public class xlsSetting extends AppCompatActivity {
                 intent2.putExtra("col_start", col_start);
                 //intent2.putExtra("col_end", col_end);
 
-                /* 만약 입력한 값이 없을 경우에 대한 처리 추가 필요 */
+                /* 파일 경로명과, 좌표값을 recent.xls 에 기록 */
+                Recode_Recent_Excel();
 
                 startActivity(intent2);
             }
@@ -188,11 +211,11 @@ public class xlsSetting extends AppCompatActivity {
         });
     }
 
-    public void Preview_Execl(String direction){
+    public void Preview_Execl(String direction) {
         // bitmap 크기 설정, Canvas 에 연결 ---------------------
         bitmap = Bitmap.createBitmap(row_size * col_count + row_index_size,
-                                    col_size * row_count + col_index_size,
-                                            Bitmap.Config.ARGB_8888);
+                col_size * row_count + col_index_size,
+                Bitmap.Config.ARGB_8888);
         canvas = new Canvas(bitmap);
         canvas.drawColor(Color.BLACK);
 
@@ -222,21 +245,21 @@ public class xlsSetting extends AppCompatActivity {
         current_row_count = row_count + row_move_count;
         current_col_count = col_count + col_move_count;
 
-        switch(direction){
+        switch (direction) {
             case "down":
-                if(current_row_count < xls_row_max_count)
+                if (current_row_count < xls_row_max_count)
                     row_move_count++;
                 break;
             case "up":
-                if(row_move_count > 0)
+                if (row_move_count > 0)
                     row_move_count--;
                 break;
             case "right":
-                if(current_col_count < xls_col_max_count)
+                if (current_col_count < xls_col_max_count)
                     col_move_count++;
                 break;
             case "left":
-                if(col_move_count > 0)
+                if (col_move_count > 0)
                     col_move_count--;
                 break;
             case "last":
@@ -263,7 +286,7 @@ public class xlsSetting extends AppCompatActivity {
             for (j = 0; j < row_count; j++) {
                 excelload = excelArray[j + row_move_count][i + col_move_count];
                 // 셀에 값이 있을 경우
-                if(!excelload.equals("")){
+                if (!excelload.equals("")) {
                     /* 배경 셀 그리기 */
                     paint.setStyle(Paint.Style.FILL);
                     paint.setColor(Color.WHITE);
@@ -286,7 +309,7 @@ public class xlsSetting extends AppCompatActivity {
                     /* 셀의 값 그리기 */
                     paint.setColor(Color.BLACK);
                     paint.setStyle(Paint.Style.FILL);
-                    if(excelload.length() > 7){
+                    if (excelload.length() > 7) {
                         excelload_alpha = excelload.substring(0, 5) + "..";
                         canvas.drawText(excelload_alpha,
                                 0,
@@ -294,15 +317,13 @@ public class xlsSetting extends AppCompatActivity {
                                 (i * row_size) + (row_size / 2) + row_index_size,
                                 (j * col_size) + (col_size * 3 / 4) + col_index_size,
                                 paint);
-                    }
-                    else{
+                    } else {
                         canvas.drawText(excelload,
                                 (i * row_size) + (row_size / 2) + row_index_size,
                                 (j * col_size) + (col_size * 3 / 4) + col_index_size,
                                 paint);
                     }
-                }
-                else{
+                } else {
                     /* 배경 셀 그리기 */
                     paint.setStyle(Paint.Style.FILL);
                     paint.setColor(Color.WHITE);
@@ -325,7 +346,7 @@ public class xlsSetting extends AppCompatActivity {
         }
 
         /* Paint Merge Cell */
-        for(userRange rg : userRange){
+        for (userRange rg : userRange) {
             Log.d("merge topLeft", rg.getTopLeftContents());
             Log.d("merge row", Integer.toString(rg.getTopLeftRow()));
             Log.d("merge col", Integer.toString(rg.getTopLeftColumn()));
@@ -336,9 +357,9 @@ public class xlsSetting extends AppCompatActivity {
             Log.d("col_move_count", Integer.toString(col_move_count));
 
             /* drawRect 는 size 를 기준으로 하기 때문에, count 를 의미하는 값은 row, column 이 반대가 되어야 함
-            * 4 * 15 의 canvas 를 그릴 땐, 움직이는 만큼 move_count 를 더해주어야 엑셀 시작값이 달라지지만
-            * merge cell 의 경우 절대적인 위치이므로 이동한 만큼 다시 돌려놓아야 주므로 move count 를
-            * 빼주어야(반대의 의미로 생각해야) 된다. */
+             * 4 * 15 의 canvas 를 그릴 땐, 움직이는 만큼 move_count 를 더해주어야 엑셀 시작값이 달라지지만
+             * merge cell 의 경우 절대적인 위치이므로 이동한 만큼 다시 돌려놓아야 주므로 move count 를
+             * 빼주어야(반대의 의미로 생각해야) 된다. */
 
             /* 병합 셀 배경 그리기 */
             paint.setStyle(Paint.Style.FILL);
@@ -379,9 +400,9 @@ public class xlsSetting extends AppCompatActivity {
             /* 병합 셀 데이터 그리기 */
             paint.setColor(Color.BLACK);
             paint.setStyle(Paint.Style.FILL);
-            if(merge_all_col_count > 1){
-                if(excelload.length() > 7){
-                    if(merge_all_row_count > 2 && excelload.length() > 13) {
+            if (merge_all_col_count > 1) {
+                if (excelload.length() > 7) {
+                    if (merge_all_row_count > 2 && excelload.length() > 13) {
                         excelload_alpha = excelload.substring(0, 10) + "...";
                         canvas.drawText(excelload_alpha,
                                 0,
@@ -389,8 +410,7 @@ public class xlsSetting extends AppCompatActivity {
                                 merge_TopLeft_row_size + (merge_all_row_size / 2) + row_index_size,
                                 merge_TopLeft_col_size + (merge_all_col_size / 2) + (col_size * 1 / 4) + col_index_size,
                                 paint);
-                    }
-                    else{
+                    } else {
                         excelload_alpha = excelload.substring(0, 5) + "..";
                         canvas.drawText(excelload_alpha,
                                 0,
@@ -399,17 +419,15 @@ public class xlsSetting extends AppCompatActivity {
                                 merge_TopLeft_col_size + (merge_all_col_size / 2) + (col_size * 1 / 4) + col_index_size,
                                 paint);
                     }
-                }
-                else{
+                } else {
                     canvas.drawText(excelload,
                             merge_TopLeft_row_size + (merge_all_row_size / 2) + row_index_size,
                             merge_TopLeft_col_size + (merge_all_col_size / 2) + (col_size * 1 / 4) + col_index_size,
                             paint);
                 }
-            }
-            else{
-                if(excelload.length() > 7) {
-                    if(merge_all_row_count > 2 && excelload.length() > 13){
+            } else {
+                if (excelload.length() > 7) {
+                    if (merge_all_row_count > 2 && excelload.length() > 13) {
                         excelload_alpha = excelload.substring(0, 10) + "...";
                         canvas.drawText(excelload_alpha,
                                 0,
@@ -417,8 +435,7 @@ public class xlsSetting extends AppCompatActivity {
                                 merge_TopLeft_row_size + (merge_all_row_size / 2) + row_index_size,
                                 merge_TopLeft_col_size + (merge_all_col_size * 3 / 4) + col_index_size,
                                 paint);
-                    }
-                    else{
+                    } else {
                         excelload_alpha = excelload.substring(0, 5) + "..";
                         canvas.drawText(excelload_alpha,
                                 0,
@@ -427,8 +444,7 @@ public class xlsSetting extends AppCompatActivity {
                                 merge_TopLeft_col_size + (merge_all_col_size * 3 / 4) + col_index_size,
                                 paint);
                     }
-                }
-                else{
+                } else {
                     canvas.drawText(excelload,
                             merge_TopLeft_row_size + (merge_all_row_size / 2) + row_index_size,
                             merge_TopLeft_col_size + (merge_all_col_size * 3 / 4) + col_index_size,
@@ -443,7 +459,7 @@ public class xlsSetting extends AppCompatActivity {
         paint.setColor(Color.parseColor("#cccccc"));
         canvas.drawRect(0, 0, row_index_size, col_index_size, paint);
 
-        for(k = 0; k < col_count; k++){
+        for (k = 0; k < col_count; k++) {
             canvas.drawRect((k * row_size) + row_index_size,
                     (0 * col_size),
                     (k * row_size) + row_size + row_index_size,
@@ -451,7 +467,7 @@ public class xlsSetting extends AppCompatActivity {
                     paint);
         }
 
-        for(k = 0; k < row_count; k++){
+        for (k = 0; k < row_count; k++) {
             canvas.drawRect((0 * row_size),
                     (k * col_size) + col_index_size,
                     (0 * row_size) + row_index_size,
@@ -461,7 +477,7 @@ public class xlsSetting extends AppCompatActivity {
 
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.parseColor("#999999"));
-        for(k = 0; k < col_count; k++){
+        for (k = 0; k < col_count; k++) {
             canvas.drawRect((k * row_size) + row_index_size,
                     (0 * col_size),
                     (k * row_size) + row_size + row_index_size,
@@ -469,7 +485,7 @@ public class xlsSetting extends AppCompatActivity {
                     paint);
         }
 
-        for(k = 0; k < row_count; k++){
+        for (k = 0; k < row_count; k++) {
             canvas.drawRect((0 * row_size),
                     (k * col_size) + col_index_size,
                     (0 * row_size) + row_index_size,
@@ -481,22 +497,22 @@ public class xlsSetting extends AppCompatActivity {
         /* index Cell 값 그리기 */
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
-        for(k = 0; k < col_count; k++){
-            canvas.drawText(Integer.toString(k + col_move_count),
+        for (k = 0; k < col_count; k++) {
+            canvas.drawText(Integer.toString(k + col_move_count + 1),
                     (k * row_size) + (row_size / 2) + row_index_size,
                     (0 * col_size) + (col_size * 3 / 4),
                     paint);
         }
 
-        for(k = 0; k < row_count; k++){
-            canvas.drawText(Integer.toString(k + row_move_count),
+        for (k = 0; k < row_count; k++) {
+            canvas.drawText(Integer.toString(k + row_move_count + 1),
                     (0 * row_size) + (row_index_size / 2),
                     (k * col_size) + (col_size * 3 / 4) + col_index_size,
                     paint);
         }
     }
 
-    public void Excel(){
+    public void Excel() {
         try {
             File file = new File(filePath);
 
@@ -524,8 +540,15 @@ public class xlsSetting extends AppCompatActivity {
                     // getCell 은 열, 행 순 (좌표 개념)
                     String cell_value = sheet.getCell(col, row).getContents();
                     excelArray[row][col] = cell_value;
-                    Log.d("sheet value", sheet.getCell(col, row).getContents());
                 }
+            }
+
+            for (int row = 0; row < xls_row_max_count; row++) {
+                RowList.add(Integer.toString(row + 1));
+            }
+
+            for (int col = 0; col < xls_col_max_count; col++) {
+                ColList.add(Integer.toString(col + 1));
             }
 
             // 병합 셀 Range 객체 range 에 저장
@@ -534,7 +557,7 @@ public class xlsSetting extends AppCompatActivity {
             Log.d("range length", Integer.toString(range.length));
 
             int count = 0;
-            for(Range rg : range){
+            for (Range rg : range) {
                 userRange[count] = new userRange(); // 객체 배열을 사용할 때 100 번 주의 !!!
                 userRange[count].setTopLeftRow(rg.getTopLeft().getRow());
                 userRange[count].setTopLeftColumn(rg.getTopLeft().getColumn());
@@ -544,12 +567,30 @@ public class xlsSetting extends AppCompatActivity {
                 count++;
             }
 
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
-        } catch (BiffException e){
+        } catch (BiffException e) {
             e.printStackTrace();
         } finally {
             workbook.close();
         }
+    }
+
+    public void Recode_Recent_Excel() {
+        /*
+        try {
+            // 엑셀 파일 열기 --------------------------------------
+            InputStream inputStream = getBaseContext().getResources().getAssets().open(fileName);
+
+            // 파일이 없는 경우 생성, 있는 경우 예외 처리 필요
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (BiffException e) {
+            e.printStackTrace();
+        } finally {
+            workbook.close();
+        }
+        */
     }
 }

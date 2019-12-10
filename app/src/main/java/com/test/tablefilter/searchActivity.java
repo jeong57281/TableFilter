@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,8 +16,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.xml.transform.Result;
 
@@ -88,8 +91,11 @@ public class searchActivity extends AppCompatActivity {
 
         // 리스트뷰와 자동완성 텍스트 뷰의 어댑터를 지정해준다.
         result_ResultList.setAdapter(ResultAdapter);
-
         autoCompleteTextView.setAdapter(SearchAdapter);
+
+        // 검색어 중 하나를 랜덤으로 선택해 hint 로 추가
+        Random random = new Random();
+        autoCompleteTextView.setHint("예)" + SearchList.get(random.nextInt(SearchList.size())));
 
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -115,9 +121,6 @@ public class searchActivity extends AppCompatActivity {
             File file = new File(filePath);
 
             // 엑셀 파일 열기 --------------------------------------
-            //InputStream inputStream = getBaseContext().getResources().getAssets().open(fileName);
-
-            /* jxl encoding setting : utf-8 */
             WorkbookSettings ws = new WorkbookSettings();
             ws.setEncoding("Cp1252");
             workbook = Workbook.getWorkbook(file, ws);
@@ -149,10 +152,10 @@ public class searchActivity extends AppCompatActivity {
                 }
             }
 
+            // 검색 할 키워드(테이블의 0열)를 SearchList 에 저장
             for (int row = row_start + 1; row < row_end; row++) {
                 String cell_value = excelArray[row][col_start];
                 SearchList.add(cell_value);
-                Log.d("cell", cell_value);
             }
 
             // 병합 셀 Range 객체 range 에 저장
