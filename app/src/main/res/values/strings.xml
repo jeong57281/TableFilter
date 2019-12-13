@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">TableFilter</string>
+    <string name="Usage">1. 사진과 같은 형태의 표만 사용할 수 있습니다.\n\n2. 첫 번째 열(1, 2, 3, ...)값을 검색합니다.\n\n3. 검색 결과는 첫 번째 행(A, B, C, ...)에 따른 값이 출력됩니다.
+    </string>
+    <string name="Warn">1. xls 파일에 표 이외의 불순물이 있을 경우 출력에 문제가 생길 수 있습니다.
+    </string>
 </resources>

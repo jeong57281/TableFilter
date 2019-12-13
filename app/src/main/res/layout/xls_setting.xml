@@ -18,7 +18,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="!" />
+            android:layout_margin="10dp"
+            android:background="@drawable/change_btn_shape"
+            android:text="" />
 
         <TextView
             android:layout_width="0dp"
@@ -31,6 +33,7 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_margin="10dp"
             android:layout_weight="1" />
 
     </LinearLayout>
@@ -38,32 +41,47 @@
     <TextView
         android:id="@+id/tv_fileName"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.5"
+        android:gravity="left|center"
+        android:layout_marginLeft="30dp"
+        android:textSize="15sp"
         android:text="파일명 : " />
 
     <ImageView
         android:id="@+id/sample_image"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5" />
+        android:layout_weight="5"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="10dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" >
+        android:layout_weight="1"
+        android:layout_margin="10dp" >
 
         <Button
             android:id="@+id/left_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="◀" />
+            android:background="@drawable/change_btn_shape"
+            android:layout_marginTop="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginBottom="5dp"
+            android:drawable="@drawable/right_arrow_96" />
 
         <Button
             android:id="@+id/down_btn"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@drawable/change_btn_shape"
+            android:layout_margin="5dp"
             android:text="▼" />
 
         <Button
@@ -71,6 +89,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@drawable/change_btn_shape"
+            android:layout_margin="5dp"
             android:text="▲" />
 
         <Button
@@ -78,6 +98,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@drawable/change_btn_shape"
+            android:layout_margin="5dp"
             android:text="▶" />
 
         <Button
@@ -85,6 +107,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@drawable/change_btn_shape"
+            android:layout_margin="5dp"
             android:text="⇱" />
 
         <Button
@@ -92,104 +116,70 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@drawable/change_btn_shape"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+
             android:text="⇲" />
 
     </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.5"
+        android:gravity="left|center"
+        android:layout_marginLeft="10dp"
+        android:textSize="20sp"
         android:text="테이블의 시작 행, 열 값을 입력" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" >
+        android:layout_weight="1"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:gravity="center" >
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="행:"
-            android:layout_weight="1" />
+            android:textSize="20sp"
+            android:layout_weight="0.5" />
 
         <Spinner
             android:id="@+id/rowSpinner"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:textSize="20sp"
             android:layout_weight="1" />
-
-        <!--
-        <EditText
-            android:id="@+id/rowEdit_start"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-            -->
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="열:"
-            android:layout_weight="1" />
+            android:textSize="20sp"
+            android:layout_weight="0.5" />
 
         <Spinner
             android:id="@+id/colSpinner"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-        <!--
-        <EditText
-            android:id="@+id/colEdit_start"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-            -->
+            android:layout_weight="1"
+            android:textSize="20sp" />
 
     </LinearLayout>
-<!--
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="테이블의 마지막 행, 열 값을 입력" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" >
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="행:"
-            android:layout_weight="1" />
-
-        <EditText
-            android:id="@+id/rowEdit_end"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="열:"
-            android:layout_weight="1" />
-
-        <EditText
-            android:id="@+id/colEdit_end"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-    </LinearLayout>
-    -->
 
     <Button
         android:id="@+id/search_btn"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:textSize="20sp"
+        android:background="@drawable/next_btn_shape"
+        android:layout_margin="10dp"
         android:text="확인"/>
 
 </LinearLayout>

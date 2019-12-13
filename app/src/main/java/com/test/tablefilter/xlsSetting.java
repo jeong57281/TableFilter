@@ -1,10 +1,19 @@
 package com.test.tablefilter;
 
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Shader;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,9 +23,13 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,10 +53,19 @@ public class xlsSetting extends AppCompatActivity {
     Button left_btn;
     Button first_btn;
     Button last_btn;
+    Button notice_btn;
     TextView tv_fileName;
     Spinner RowSpinner, ColSpinner;
 
     List<String> RowList, ColList;
+
+    // dialog 를 위한
+    Dialog dialog;
+    TextView tvTitle, tvUsage, tvWarn;
+    ImageView ivUsage, ivWarn;
+
+    String check_version;
+    String check_status;
 
     // intent
     Intent intent, intent2;
@@ -77,7 +99,7 @@ public class xlsSetting extends AppCompatActivity {
     int col_size = 40;
 
     // 셀의 개수 지정
-    int row_count = 15;
+    int row_count = 14;
     int col_count = 4;
 
     //  범위를 조정할 크기값 */
@@ -102,11 +124,114 @@ public class xlsSetting extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.xls_setting);
 
-        /* intent */
+        // ------------------------------------------------------------------------------
+        dialog = new Dialog(this, R.style.Dialog);
+        dialog.setContentView(R.layout.custom_dialog);
+
+        tvTitle = (TextView) dialog.findViewById(R.id.dialogTitle);
+        tvTitle.setText("도움말");
+
+        // 사용법 안내 image, textview
+        ivUsage = (ImageView) dialog.findViewById(R.id.dialogUsageImage);
+        ivUsage.setImageResource(R.drawable.spreadsheettable_hojadecalculo_9378);
+
+        tvUsage = (TextView) dialog.findViewById(R.id.dialogUsageText);
+        tvUsage.setText(R.string.Usage);
+
+        // 잘못된 사용법 안내 image, textview
+        tvWarn = (TextView) dialog.findViewById(R.id.dialogWarnText);
+        tvWarn.setText(R.string.Warn);
+
+        ivWarn = (ImageView) dialog.findViewById(R.id.dialogWarnImage);
+        ivWarn.setImageResource(R.drawable.spreadsheettable_hojadecalculo_93);
+
+        // ------------------------------------------------------------------------------
+        // 다시 보지 않기 구현
+        String version;
+        try {
+            PackageInfo i = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = i.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            version = "";
+        }
+
+        SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE); // UI 상태를 저장합니다.
+        SharedPreferences.Editor editor = pref.edit(); // Editor를 불러옵니다
+
+        editor.putString("check_version", version); // 저장할 값들을 입력합니다.
+        editor.commit(); // 저장합니다.
+
+        check_version = pref.getString("check_version", "");
+        check_status = pref.getString("check_status", "");
+
+        Button dialogOkButton = (Button) dialog.findViewById(R.id.OkBtn);
+        dialogOkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        Button dialogNoShowAgainButton = (Button) dialog.findViewById(R.id.NoShowAgainBtn);
+        if (!check_version.equals(check_status)) {
+            dialogNoShowAgainButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String version;
+                    try {
+                        PackageInfo i = getPackageManager().getPackageInfo(getPackageName(), 0);
+                        version = i.versionName;
+                    } catch (PackageManager.NameNotFoundException e) {
+                        version = "";
+                    }
+
+                    SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+
+                    // UI 상태를 저장합니다.
+                    SharedPreferences.Editor editor = pref.edit(); // Editor를 불러옵니다
+                    editor.putString("check_status", version);
+                    editor.commit(); // 저장합니다.
+
+                    check_status = pref.getString("check_status", "");
+
+                    dialog.cancel();
+
+                    // 이것도 string.xml 을 이용하여야 하나? toast 는 예외?
+                    Toast.makeText(getApplicationContext(), "도움말 버튼을 통해 다시 확인할 수 있습니다.", Toast.LENGTH_LONG).show();
+                }
+            });
+
+            // 첫 dialog 실행
+            dialog.show();
+        }
+        else{
+            dialogNoShowAgainButton.setBackgroundColor(getResources().getColor(R.color.TransparencyBlack));
+        }
+        // ------------------------------------------------------------------------------
+        // 유의사항 출력 버튼
+        notice_btn = (Button) findViewById(R.id.notice_btn);
+        notice_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*
+                SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+
+                SharedPreferences.Editor editor = pref.edit(); // Editor를 불러옵니다
+                editor.remove("check_status");
+                editor.commit(); // 저장합니다.
+
+                check_status = "";
+                 */
+
+                dialog.show();
+            }
+        });
+        // ------------------------------------------------------------------------------
+        // intent
         intent = getIntent();
         filePath = intent.getExtras().getString("filePath");
         fileName = intent.getExtras().getString("fileName");
-
+        // ------------------------------------------------------------------------------
         tv_fileName = (TextView) findViewById(R.id.tv_fileName);
         tv_fileName.setText("파일명 : " + fileName);
 
@@ -118,13 +243,13 @@ public class xlsSetting extends AppCompatActivity {
 
         RowList = new ArrayList<>();
         ColList = new ArrayList<>();
-
+        // ------------------------------------------------------------------------------
         // excel 데이터 배열에 불러오기
         Excel();
 
         // 미리보기 첫 호출
         Preview_Execl("none");
-
+        // ------------------------------------------------------------------------------
         // spinner를 연결하기 위해 사용되는 어댑터
         ArrayAdapter<String> RowAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, RowList);
@@ -135,7 +260,8 @@ public class xlsSetting extends AppCompatActivity {
         // 행, 열 의 spinner 에 List 를 연결
         RowSpinner.setAdapter(RowAdapter);
         ColSpinner.setAdapter(ColAdapter);
-
+        // ------------------------------------------------------------------------------
+        // 확인 버튼
         btn = (Button) findViewById(R.id.search_btn);
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,24 +270,35 @@ public class xlsSetting extends AppCompatActivity {
                 /* 파일 경로를 전달 */
                 intent2.putExtra("filePath", filePath);
 
-                /* 입력한 좌표값을 전달 */
-                row_start = Integer.parseInt(RowSpinner.getSelectedItem().toString()) - 1;
-                //row_end = Integer.parseInt(rowEdit_end.getText().toString());
-                col_start = Integer.parseInt(ColSpinner.getSelectedItem().toString()) - 1;
-                //col_end = Integer.parseInt(colEdit_end.getText().toString());
+                // 값을 선택하지 않았을 경우 toast 경고 메세지 출력
+                if(RowSpinner.getSelectedItem().toString().equals("선택") ||
+                    ColSpinner.getSelectedItem().toString().equals("선택")){
 
-                intent2.putExtra("row_start", row_start);
-                //intent2.putExtra("row_end", row_end);
-                intent2.putExtra("col_start", col_start);
-                //intent2.putExtra("col_end", col_end);
+                    Log.d("spinner", RowSpinner.getSelectedItem().toString());
+                    Toast.makeText(getApplicationContext(), "값을 선택하세요.", Toast.LENGTH_LONG).show();
+                }
+                else{
+                    /* 입력한 좌표값을 전달 */
+                    row_start = Integer.parseInt(RowSpinner.getSelectedItem().toString()) - 1;
+                    //row_end = Integer.parseInt(rowEdit_end.getText().toString());
+                    col_start = Integer.parseInt(ColSpinner.getSelectedItem().toString()) - 1;
+                    //col_end = Integer.parseInt(colEdit_end.getText().toString());
 
-                /* 파일 경로명과, 좌표값을 recent.xls 에 기록 */
-                Recode_Recent_Excel();
+                    intent2.putExtra("row_start", row_start);
+                    //intent2.putExtra("row_end", row_end);
+                    intent2.putExtra("col_start", col_start);
+                    //intent2.putExtra("col_end", col_end);
 
-                startActivity(intent2);
+                    /* 파일 경로명과, 좌표값을 recent.xls 에 기록 */
+                    Recode_Recent_Excel();
+
+                    startActivity(intent2);
+                }
+
             }
         });
-
+        // ------------------------------------------------------------------------------
+        // 엑셀 미리보기 이동버튼
         down_btn = (Button) findViewById(R.id.down_btn);
         down_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -289,7 +426,7 @@ public class xlsSetting extends AppCompatActivity {
                 if (!excelload.equals("")) {
                     /* 배경 셀 그리기 */
                     paint.setStyle(Paint.Style.FILL);
-                    paint.setColor(Color.WHITE);
+                    paint.setColor(Color.rgb(252, 252, 255));
                     canvas.drawRect((i * row_size) + row_index_size,
                             (j * col_size) + col_index_size,
                             (i * row_size) + row_size + row_index_size,
@@ -326,7 +463,7 @@ public class xlsSetting extends AppCompatActivity {
                 } else {
                     /* 배경 셀 그리기 */
                     paint.setStyle(Paint.Style.FILL);
-                    paint.setColor(Color.WHITE);
+                    paint.setColor(Color.rgb(252, 252, 255));
                     canvas.drawRect((i * row_size) + row_index_size,
                             (j * col_size) + col_index_size,
                             (i * row_size) + row_size + row_index_size,
@@ -363,7 +500,7 @@ public class xlsSetting extends AppCompatActivity {
 
             /* 병합 셀 배경 그리기 */
             paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.WHITE);
+            paint.setColor(Color.rgb(252, 252, 255));
             canvas.drawRect(((rg.getTopLeftColumn() - col_move_count) * row_size) + row_index_size,
                     ((rg.getTopLeftRow() - row_move_count) * col_size) + col_index_size,
                     ((rg.getBottomRightColumn() - col_move_count) * row_size) + row_size + row_index_size,
@@ -456,7 +593,12 @@ public class xlsSetting extends AppCompatActivity {
         // index 를 나타내는 0행 0열 ----------------------------
         /* index Cell 배경 그리기 */
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#cccccc"));
+        /* paint.setShader(new LinearGradient(0, 0, 100, 100,
+                Color.rgb(252, 252, 254),
+                Color.rgb(237, 237, 246),
+                Shader.TileMode.CLAMP)); */
+        paint.setColor(Color.rgb(237, 237, 255));
+        //paint.setColor(Color.parseColor("#cccccc"));
         canvas.drawRect(0, 0, row_index_size, col_index_size, paint);
 
         for (k = 0; k < col_count; k++) {
@@ -493,6 +635,7 @@ public class xlsSetting extends AppCompatActivity {
                     paint);
         }
 
+        canvas.drawRect(0, 0, row_index_size, col_index_size, paint);
 
         /* index Cell 값 그리기 */
         paint.setColor(Color.BLACK);
@@ -542,6 +685,9 @@ public class xlsSetting extends AppCompatActivity {
                     excelArray[row][col] = cell_value;
                 }
             }
+
+            RowList.add("선택");
+            ColList.add("선택");
 
             for (int row = 0; row < xls_row_max_count; row++) {
                 RowList.add(Integer.toString(row + 1));

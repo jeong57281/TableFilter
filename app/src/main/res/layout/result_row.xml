@@ -4,24 +4,25 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="60dp"
-    android:background="@drawable/file_manager_list_node_shape" >
-
-    <ImageView
-        android:id="@+id/rowImage"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_weight="1" />
+    android:background="@drawable/result_list_node_shape" >
 
     <TextView
-        android:id="@+id/rowtext"
+        android:id="@+id/colItemRow"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_weight="5"
-        android:layout_marginRight="10dp"
-        android:gravity="left|center"
+        android:layout_weight="2"
+        android:gravity="center"
         android:singleLine="true"
-        android:textSize="20sp" />
+        android:textSize="25dp" />
+
+    <TextView
+        android:id="@+id/colValueRow"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_weight="4"
+        android:gravity="center"
+        android:textColor="@color/red"
+        android:singleLine="true"
+        android:textSize="25dp" />
 
 </LinearLayout>

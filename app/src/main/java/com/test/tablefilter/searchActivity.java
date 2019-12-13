@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -39,9 +40,12 @@ public class searchActivity extends AppCompatActivity {
 
     // view
     Button btnSearch;
-    TextView tvStatus;
+    Button btnHome;
+    TextView tvStatus; // tvTitle 은 키보드의 포커스를 맞추기 위해서 선언
     ListView result_ResultList;
     AutoCompleteTextView autoCompleteTextView;
+
+    InputMethodManager imm;
 
     // etc
     boolean flag = false; // 일치하는 항목이 없을 경우, 안내 메세지를 위한 flag
@@ -61,7 +65,8 @@ public class searchActivity extends AppCompatActivity {
     String filePath;
 
     // ResultList
-    List<String> ResultList, SearchList;
+    List<String> SearchList;
+    ArrayList<ResultListviewItem> ResultList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +74,6 @@ public class searchActivity extends AppCompatActivity {
         setContentView(R.layout.search_activity);
 
         btnSearch = (Button) findViewById(R.id.buttonSearch);
-        //editText = (TextView) findViewById(R.id.editText);
         tvStatus = (TextView) findViewById(R.id.tvStatus);
         result_ResultList = (ListView) findViewById(R.id.result_list);
         autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
@@ -80,8 +84,8 @@ public class searchActivity extends AppCompatActivity {
         SearchList = new ArrayList<>();
 
         // 리스트뷰와 리스트를 연결하기 위해 사용되는 어댑터
-        ArrayAdapter<String> ResultAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1, ResultList);
+        /* ResultListviewAdapter ResultAdapter = new ResultListviewAdapter(this,
+                R.layout.result_row, ResultList); search_Excel 메소드로 이동 */
 
         ArrayAdapter<String> SearchAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, SearchList);
@@ -90,17 +94,32 @@ public class searchActivity extends AppCompatActivity {
         Excel();
 
         // 리스트뷰와 자동완성 텍스트 뷰의 어댑터를 지정해준다.
-        result_ResultList.setAdapter(ResultAdapter);
+        // 자동완성 텍스트 뷰는 excel 파일에서 불러온 데이터를 1회성으로 리스트에 저장해 연결하지만,
+        // 값을 검색했을 때 결과를 저장해주는 arraylist 는 매번 연결이 필요하다. 따라서 search_Excel 메소드로 이동
+        /* result_ResultList.setAdapter(ResultAdapter); search_Excel 메소드로 이동 */
         autoCompleteTextView.setAdapter(SearchAdapter);
 
         // 검색어 중 하나를 랜덤으로 선택해 hint 로 추가
         Random random = new Random();
-        autoCompleteTextView.setHint("예)" + SearchList.get(random.nextInt(SearchList.size())));
+        autoCompleteTextView.setHint("예) " + SearchList.get(random.nextInt(SearchList.size())));
+
+        // 확인 버튼을 누르면 키보드가 강제로 내려가도록 하기 위한 코드
+        imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 SearchExcel(autoCompleteTextView.getText().toString());
+                imm.hideSoftInputFromWindow(autoCompleteTextView.getWindowToken(), 0);
+            }
+        });
+
+        btnHome = (Button) findViewById(R.id.home_btn);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
             }
         });
     }
@@ -188,9 +207,10 @@ public class searchActivity extends AppCompatActivity {
         // row, col 의 시작(start) 좌표는 0, 0
         // 1씩 값을 더해 (1, 0), (0, 1) 좌표를 이동
         for (int row = row_start + 1; row < row_end; row++) {
+
             String rowItem = excelArray[row][col_start];
+
             // 대소문자 구분 없이 입력된 값을 받아 비교
-            Log.d("rowItem", rowItem);
             if (rowItem.equals(word) || rowItem.toLowerCase().equals(word)) {
                 for(int col = col_start + 1; col < col_end; col++){
                     /* item 과 value 값을 찾는 부분에서, 만약 빈 값이 출력되면 해당 셀의 위치가 병합된 셀인지를
@@ -210,14 +230,11 @@ public class searchActivity extends AppCompatActivity {
                                   Log.d("mergevs", Integer.toString(col));
                                     */
                                     if(mergeRow == row_start && mergeCol == col){
-                                        ResultList.add(userRange.getTopLeftContents());
+                                        colItem = userRange.getTopLeftContents();
                                     }
                                 }
                             }
                         }
-                    }
-                    else{
-                        ResultList.add(colItem);
                     }
 
                     String colValue = excelArray[row][col];
@@ -233,15 +250,19 @@ public class searchActivity extends AppCompatActivity {
                                   Log.d("mergevs", Integer.toString(col));
                                     */
                                   if(mergeRow == row && mergeCol == col){
-                                      ResultList.add(userRange.getTopLeftContents());
+                                      colValue = userRange.getTopLeftContents();
                                   }
                               }
                            }
                        }
                     }
-                    else{
-                        ResultList.add(colValue);
-                    }
+
+                    Log.d("colItem", colItem);
+                    Log.d("colValue", colValue);
+                    ResultListviewItem resultItem = new ResultListviewItem(colItem, colValue);
+                    Log.d("colResultItem", resultItem.getColItem());
+                    Log.d("colResultValue", resultItem.getColValue());
+                    ResultList.add(resultItem);
                 }
                 tvStatus.setText("항목을 찾았습니다.");
                 flag = true;
@@ -249,6 +270,15 @@ public class searchActivity extends AppCompatActivity {
         }
         if(!flag){
             tvStatus.setText("일치하는 항목이 없습니다.");
+        }
+
+        ResultListviewAdapter ResultAdapter = new ResultListviewAdapter(this,
+                R.layout.result_row, ResultList);
+        result_ResultList.setAdapter(ResultAdapter);
+
+        for(int i = 0; i < ResultList.size(); i++){
+            Log.d("resultListItem", ResultList.get(i).getColItem());
+            Log.d("resultListItem", ResultList.get(i).getColValue());
         }
     }
 }
