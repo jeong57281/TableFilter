@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".searchActivity">
-
-    <!--
-        android:background="@drawable/backgroundcolor"
-    -->
 
     <TextView
         android:id="@+id/tvTitle"
@@ -19,11 +14,6 @@
         android:gravity="center"
         android:text="검색 화면"
         android:textSize="30dp" />
-
-    <!--
-        android:background="@drawable/textviewshape"
-        android:textColor="#ffff00"
-    -->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -53,15 +43,6 @@
             android:textSize="20sp"
             android:text="확인" />
 
-        <!--
-            android:shadowColor="#A8A8A8"
-            android:shadowDx="0"
-            android:shadowDy="0"
-            android:shadowRadius="5"
-            android:textColor="#ffff00"
-            android:background="@drawable/buttonShape"
-        -->
-
     </LinearLayout>
 
     <TextView
@@ -84,15 +65,6 @@
         android:dividerHeight="10dp"
         android:background="@drawable/list_shape" />
 
-    <!--
-    <TextView
-        android:id="@+id/tvCopyright"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Copyrightⓒ 2019.ppwag.All rights reserved."
-        android:textSize="10sp" />
-        -->
-
     <Button
         android:id="@+id/home_btn"
         android:layout_width="match_parent"
@@ -101,6 +73,6 @@
         android:layout_margin="10dp"
         android:background="@drawable/next_btn_shape"
         android:textSize="20sp"
-        android:text="홈 버튼" />
+        android:text="메인으로" />
 
 </LinearLayout>

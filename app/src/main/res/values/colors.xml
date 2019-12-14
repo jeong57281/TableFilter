@@ -8,14 +8,17 @@
 
     <color name="pastelSkyBlue">#ededff</color>
     <color name="pastelDKSkyBlue">#dedeff</color>
+    <color name="pastelDeepDKSkyBlue">#cfcfff</color>
     <color name="pastelRed">#ffedf6</color>
     <color name="pastelMint">#edfff6</color>
     <color name="pastelGreenTea">#edf6ed</color>
     <color name="pastelPurple">#f6edff</color>
+    <color name="pastelOrange">#fff6ed</color>
 
     <color name="red">#ff0000</color>
     <color name="black">#000000</color>
     <color name="white">#ffffff</color>
     <color name="TransparencyBlack">#33000000</color>
+    <color name="buttonShadow">#cccccc</color>
 
 </resources>

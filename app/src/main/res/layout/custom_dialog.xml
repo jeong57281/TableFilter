@@ -36,6 +36,7 @@
             android:layout_weight="2"
             android:textSize="15sp"
             android:gravity="left"
+            android:layout_gravity="center"
             android:textColor="@color/black"
             android:layout_margin="10dp" />
     </LinearLayout>
@@ -63,6 +64,7 @@
             android:layout_weight="2"
             android:textSize="15sp"
             android:gravity="left"
+            android:layout_gravity="center"
             android:textColor="@color/black"
             android:layout_margin="10dp" />
     </LinearLayout>
@@ -93,17 +95,28 @@
             android:background="@color/pastelDKSkyBlue">
         </View>
 
-        <Button
-            android:id="@+id/NoShowAgainBtn"
-            android:text="다시 보지 않기"
-            android:textColor="@color/black"
-            android:background="#fff"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="50dp"
-            android:layout_weight="1" >
-        </Button>
+            android:layout_weight="1"
+            android:gravity="center" >
 
-        <!-- 기기마다 기본 배경 색이 다른 것 같음 -->
+            <CheckBox
+                android:id="@+id/cb_NoShow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:theme="@style/MyCheckBox" >
+            </CheckBox>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:text="다시 보지 않기"
+                android:textColor="@color/black" >
+            </TextView>
+
+        </LinearLayout>
 
     </LinearLayout>
 

@@ -2,50 +2,46 @@ package com.test.tablefilter;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Environment;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import jxl.Cell;
 import jxl.Range;
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.WorkbookSettings;
 import jxl.read.biff.BiffException;
+import jxl.write.Label;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
 
 public class xlsSetting extends AppCompatActivity {
 
+    // View
     Button btn;
     Button down_btn;
     Button up_btn;
@@ -57,15 +53,16 @@ public class xlsSetting extends AppCompatActivity {
     TextView tv_fileName;
     Spinner RowSpinner, ColSpinner;
 
+    // spinner list
     List<String> RowList, ColList;
 
-    // dialog 를 위한
+    // dialog
     Dialog dialog;
     TextView tvTitle, tvUsage, tvWarn;
     ImageView ivUsage, ivWarn;
+    CheckBox dialogNoShowCb;
 
-    String check_version;
-    String check_status;
+    String NoShowStatus;
 
     // intent
     Intent intent, intent2;
@@ -73,7 +70,6 @@ public class xlsSetting extends AppCompatActivity {
     String filePath;
 
     // excel
-    Workbook workbook = null;
     Sheet sheet = null;
     String excelload, excelload_alpha;
     String[][] excelArray;
@@ -91,7 +87,7 @@ public class xlsSetting extends AppCompatActivity {
 
     int text_size = 30;
 
-    /* .xls file 미리보기를 구현할 캔버스 정보 */
+    // xls file 미리보기를 구현할 캔버스 정보
     // 셀의 크기 지정
     int row_index_size = 50;
     int col_index_size = 40;
@@ -102,29 +98,27 @@ public class xlsSetting extends AppCompatActivity {
     int row_count = 14;
     int col_count = 4;
 
-    //  범위를 조정할 크기값 */
+    // 범위를 조정할 크기값
     int row_move_count = 0;
     int col_move_count = 0;
 
-    /* 실제 .xls sheet 의 최대 행, 열 개수 */
+    // 실제 .xls sheet 의 최대 행, 열 개수
     int xls_row_max_count;
     int xls_col_max_count;
 
-    /* 미리보기에서 이동한 행, 열의 현재 위치 */
+    // 미리보기에서 이동한 행, 열의 현재 위치
     int current_row_count;
     int current_col_count;
 
-    /* 입력받은 좌표값 */
-    int row_start, row_end, col_start, col_end;
-
-    EditText rowEdit_start, rowEdit_end, colEdit_start, colEdit_end;
+    // 입력받은 좌표값
+    int row_start, col_start;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.xls_setting);
-
         // ------------------------------------------------------------------------------
+        // 도움말 dialog
         dialog = new Dialog(this, R.style.Dialog);
         dialog.setContentView(R.layout.custom_dialog);
 
@@ -144,85 +138,57 @@ public class xlsSetting extends AppCompatActivity {
 
         ivWarn = (ImageView) dialog.findViewById(R.id.dialogWarnImage);
         ivWarn.setImageResource(R.drawable.spreadsheettable_hojadecalculo_93);
-
         // ------------------------------------------------------------------------------
-        // 다시 보지 않기 구현
-        String version;
-        try {
-            PackageInfo i = getPackageManager().getPackageInfo(getPackageName(), 0);
-            version = i.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            version = "";
+        dialogNoShowCb = (CheckBox) dialog.findViewById(R.id.cb_NoShow);
+
+        SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+
+        dialogNoShowCb.setChecked(Boolean.parseBoolean(pref.getString("NoShowStatus", "")));
+
+        editor.putString("NoShowStatus", String.valueOf(dialogNoShowCb.isChecked()));
+        editor.commit();
+
+        NoShowStatus = pref.getString("NoShowStatus", "");
+
+        if(NoShowStatus.equals((String) "false")){
+           dialog.show();
         }
-
-        SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE); // UI 상태를 저장합니다.
-        SharedPreferences.Editor editor = pref.edit(); // Editor를 불러옵니다
-
-        editor.putString("check_version", version); // 저장할 값들을 입력합니다.
-        editor.commit(); // 저장합니다.
-
-        check_version = pref.getString("check_version", "");
-        check_status = pref.getString("check_status", "");
 
         Button dialogOkButton = (Button) dialog.findViewById(R.id.OkBtn);
         dialogOkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
-            }
-        });
 
-        Button dialogNoShowAgainButton = (Button) dialog.findViewById(R.id.NoShowAgainBtn);
-        if (!check_version.equals(check_status)) {
-            dialogNoShowAgainButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String version;
-                    try {
-                        PackageInfo i = getPackageManager().getPackageInfo(getPackageName(), 0);
-                        version = i.versionName;
-                    } catch (PackageManager.NameNotFoundException e) {
-                        version = "";
-                    }
-
+                if(dialogNoShowCb.isChecked()){
                     SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = pref.edit();
 
-                    // UI 상태를 저장합니다.
-                    SharedPreferences.Editor editor = pref.edit(); // Editor를 불러옵니다
-                    editor.putString("check_status", version);
-                    editor.commit(); // 저장합니다.
+                    editor.putString("NoShowStatus", String.valueOf(dialogNoShowCb.isChecked()));
+                    editor.commit();
 
-                    check_status = pref.getString("check_status", "");
+                    NoShowStatus = pref.getString("NoShowStatus", "");
 
-                    dialog.cancel();
-
-                    // 이것도 string.xml 을 이용하여야 하나? toast 는 예외?
                     Toast.makeText(getApplicationContext(), "도움말 버튼을 통해 다시 확인할 수 있습니다.", Toast.LENGTH_LONG).show();
                 }
-            });
+                else{
+                    SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = pref.edit();
 
-            // 첫 dialog 실행
-            dialog.show();
-        }
-        else{
-            dialogNoShowAgainButton.setBackgroundColor(getResources().getColor(R.color.TransparencyBlack));
-        }
+                    editor.putString("NoShowStatus", String.valueOf(dialogNoShowCb.isChecked()));
+                    editor.commit();
+
+                    NoShowStatus = pref.getString("NoShowStatus", "");
+                }
+            }
+        });
         // ------------------------------------------------------------------------------
         // 유의사항 출력 버튼
         notice_btn = (Button) findViewById(R.id.notice_btn);
         notice_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                /*
-                SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
-
-                SharedPreferences.Editor editor = pref.edit(); // Editor를 불러옵니다
-                editor.remove("check_status");
-                editor.commit(); // 저장합니다.
-
-                check_status = "";
-                 */
-
                 dialog.show();
             }
         });
@@ -231,35 +197,37 @@ public class xlsSetting extends AppCompatActivity {
         intent = getIntent();
         filePath = intent.getExtras().getString("filePath");
         fileName = intent.getExtras().getString("fileName");
-        // ------------------------------------------------------------------------------
+
         tv_fileName = (TextView) findViewById(R.id.tv_fileName);
         tv_fileName.setText("파일명 : " + fileName);
-
+        // ------------------------------------------------------------------------------
+        // 외부 글꼴 지정
+        Typeface tf = Typeface.createFromAsset(getAssets(), "AppleSDGothicNeoM.ttf");
+        // ------------------------------------------------------------------------------
         // spinner
         RowSpinner = (Spinner) findViewById(R.id.rowSpinner);
         ColSpinner = (Spinner) findViewById(R.id.colSpinner);
-        //rowEdit_end = (EditText) findViewById(R.id.rowEdit_end);
-        //colEdit_end = (EditText) findViewById(R.id.colEdit_end);
 
+        // spinner를 연결하기 위해 사용되는 어댑터
         RowList = new ArrayList<>();
         ColList = new ArrayList<>();
-        // ------------------------------------------------------------------------------
-        // excel 데이터 배열에 불러오기
-        Excel();
 
-        // 미리보기 첫 호출
-        Preview_Execl("none");
-        // ------------------------------------------------------------------------------
-        // spinner를 연결하기 위해 사용되는 어댑터
         ArrayAdapter<String> RowAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, RowList);
 
         ArrayAdapter<String> ColAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, ColList);
+        // ------------------------------------------------------------------------------
+        // excel 데이터 배열에 불러오기
+        Excel();
 
+        // Excel 함수에서 Row, Col List 값들이 저장됨.
         // 행, 열 의 spinner 에 List 를 연결
         RowSpinner.setAdapter(RowAdapter);
         ColSpinner.setAdapter(ColAdapter);
+
+        // 미리보기 첫 호출
+        Preview_Execl("none");
         // ------------------------------------------------------------------------------
         // 확인 버튼
         btn = (Button) findViewById(R.id.search_btn);
@@ -274,32 +242,27 @@ public class xlsSetting extends AppCompatActivity {
                 if(RowSpinner.getSelectedItem().toString().equals("선택") ||
                     ColSpinner.getSelectedItem().toString().equals("선택")){
 
-                    Log.d("spinner", RowSpinner.getSelectedItem().toString());
                     Toast.makeText(getApplicationContext(), "값을 선택하세요.", Toast.LENGTH_LONG).show();
                 }
                 else{
                     /* 입력한 좌표값을 전달 */
                     row_start = Integer.parseInt(RowSpinner.getSelectedItem().toString()) - 1;
-                    //row_end = Integer.parseInt(rowEdit_end.getText().toString());
                     col_start = Integer.parseInt(ColSpinner.getSelectedItem().toString()) - 1;
-                    //col_end = Integer.parseInt(colEdit_end.getText().toString());
 
                     intent2.putExtra("row_start", row_start);
-                    //intent2.putExtra("row_end", row_end);
                     intent2.putExtra("col_start", col_start);
-                    //intent2.putExtra("col_end", col_end);
 
                     /* 파일 경로명과, 좌표값을 recent.xls 에 기록 */
-                    Recode_Recent_Excel();
+                    Recent_Database(fileName, filePath, row_start, col_start);
 
                     startActivity(intent2);
                 }
-
             }
         });
         // ------------------------------------------------------------------------------
         // 엑셀 미리보기 이동버튼
         down_btn = (Button) findViewById(R.id.down_btn);
+        down_btn.setTypeface(tf);
         down_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -308,6 +271,7 @@ public class xlsSetting extends AppCompatActivity {
         });
 
         up_btn = (Button) findViewById(R.id.up_btn);
+        up_btn.setTypeface(tf);
         up_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -316,6 +280,7 @@ public class xlsSetting extends AppCompatActivity {
         });
 
         right_btn = (Button) findViewById(R.id.right_btn);
+        right_btn.setTypeface(tf);
         right_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -324,6 +289,7 @@ public class xlsSetting extends AppCompatActivity {
         });
 
         left_btn = (Button) findViewById(R.id.left_btn);
+        left_btn.setTypeface(tf);
         left_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -332,6 +298,7 @@ public class xlsSetting extends AppCompatActivity {
         });
 
         first_btn = (Button) findViewById(R.id.first_btn);
+        first_btn.setTypeface(tf);
         first_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -340,6 +307,7 @@ public class xlsSetting extends AppCompatActivity {
         });
 
         last_btn = (Button) findViewById(R.id.last_btn);
+        last_btn.setTypeface(tf);
         last_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -349,35 +317,33 @@ public class xlsSetting extends AppCompatActivity {
     }
 
     public void Preview_Execl(String direction) {
-        // bitmap 크기 설정, Canvas 에 연결 ---------------------
+        // bitmap 크기 설정, Canvas 에 연결
         bitmap = Bitmap.createBitmap(row_size * col_count + row_index_size,
                 col_size * row_count + col_index_size,
                 Bitmap.Config.ARGB_8888);
         canvas = new Canvas(bitmap);
         canvas.drawColor(Color.BLACK);
-
-        // 비트맵을 출력할 ImageView 와 연결 ---------------------
+        // ------------------------------------------------------------------------------
+        // 비트맵을 출력할 ImageView 와 연결
         imageView = (ImageView) findViewById(R.id.sample_image);
         imageView.setImageBitmap(bitmap);
-
-        // canvas 에 그리기 위한 도구인 paint 객체 선언 -----------
+        // ------------------------------------------------------------------------------
+        // canvas 에 그리기 위한 도구인 paint 객체 선언
         paint = new Paint();
         paint.setColor(Color.RED);
-
-        // 사각형 스타일 설정 (테두리만 그리기) -------------------
+        // ------------------------------------------------------------------------------
+        // 사각형 스타일 설정 (테두리만 그리기)
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeWidth(1);
-
-        // Word Style ----------------------------------------
+        // ------------------------------------------------------------------------------
+        // Word Style
         paint.setColor(Color.BLACK);
         paint.setTextSize(text_size);
         paint.setTextAlign(Paint.Align.CENTER);
-
-        /* ---------------------------------------------------
-        current_row_count, current_col_count는 현재의 최대 index 값을 보여주므로
+        // ------------------------------------------------------------------------------
+        /* current_row_count, current_col_count는 현재의 최대 index 값을 보여주므로
         엑셀 시트의 최대 데이터 범위보다 작을 경우에만 증가시켜야 한다.
-        같을 경우에 증가시키면 시트의 범위를 벗어나게 된다.
-        */
+        같을 경우에 증가시키면 시트의 범위를 벗어나게 된다. */
 
         current_row_count = row_count + row_move_count;
         current_col_count = col_count + col_move_count;
@@ -411,13 +377,8 @@ public class xlsSetting extends AppCompatActivity {
                 break;
         }
 
-        /* -----------------------------------------------------
-        4x15 사이즈의 엑셀 cell 이 미리보기에 출력된다.
-        따라서 4x15 보다 큰 엑셀 데이터만 사용하도록 권고.
-        Log.d("xls_row_max_count", Integer.toString(xls_row_max_count));
-        Log.d("row_count", Integer.toString(row_count));
-        Log.d("row_move_count", Integer.toString(row_move_count));
-         */
+        // ------------------------------------------------------------------------------
+        /* 4x15 사이즈의 엑셀 cell 이 미리보기에 출력된다. 4x15 보다 큰 엑셀 데이터만 사용하도록 권고. */
 
         for (i = 0; i < col_count; i++) {
             for (j = 0; j < row_count; j++) {
@@ -482,17 +443,9 @@ public class xlsSetting extends AppCompatActivity {
             }
         }
 
+        // ------------------------------------------------------------------------------
         /* Paint Merge Cell */
         for (userRange rg : userRange) {
-            Log.d("merge topLeft", rg.getTopLeftContents());
-            Log.d("merge row", Integer.toString(rg.getTopLeftRow()));
-            Log.d("merge col", Integer.toString(rg.getTopLeftColumn()));
-            Log.d("merge row", Integer.toString(rg.getBottomRightRow()));
-            Log.d("merge col", Integer.toString(rg.getBottomRightColumn()));
-
-            Log.d("row_move_count", Integer.toString(row_move_count));
-            Log.d("col_move_count", Integer.toString(col_move_count));
-
             /* drawRect 는 size 를 기준으로 하기 때문에, count 를 의미하는 값은 row, column 이 반대가 되어야 함
              * 4 * 15 의 canvas 를 그릴 땐, 움직이는 만큼 move_count 를 더해주어야 엑셀 시작값이 달라지지만
              * merge cell 의 경우 절대적인 위치이므로 이동한 만큼 다시 돌려놓아야 주므로 move count 를
@@ -527,10 +480,6 @@ public class xlsSetting extends AppCompatActivity {
 
             int merge_all_row_size = merge_all_row_count * row_size;
             int merge_all_col_size = merge_all_col_count * col_size;
-
-            Log.d("merge_topLeft_col_size", Integer.toString(merge_TopLeft_col_size));
-            Log.d("merge_all_col_size", Integer.toString(merge_all_col_size));
-            Log.d("merge_text_loc_size", Integer.toString(merge_TopLeft_col_size + (merge_all_col_size / 2) + col_index_size));
 
             /* 병합된 데이터 영역중 topLeft 를 제외한 나머지 셀에다 같은 값 입력해주기 (write 작업을 하므로 원본을 따로 저장해둘지 생각해보기) */
 
@@ -590,15 +539,11 @@ public class xlsSetting extends AppCompatActivity {
             }
         }
 
-        // index 를 나타내는 0행 0열 ----------------------------
+        // ------------------------------------------------------------------------------
+        // index 를 나타내는 0행 0열
         /* index Cell 배경 그리기 */
         paint.setStyle(Paint.Style.FILL);
-        /* paint.setShader(new LinearGradient(0, 0, 100, 100,
-                Color.rgb(252, 252, 254),
-                Color.rgb(237, 237, 246),
-                Shader.TileMode.CLAMP)); */
         paint.setColor(Color.rgb(237, 237, 255));
-        //paint.setColor(Color.parseColor("#cccccc"));
         canvas.drawRect(0, 0, row_index_size, col_index_size, paint);
 
         for (k = 0; k < col_count; k++) {
@@ -655,6 +600,7 @@ public class xlsSetting extends AppCompatActivity {
         }
     }
 
+    Workbook writableWorkbook;
     public void Excel() {
         try {
             File file = new File(filePath);
@@ -662,24 +608,21 @@ public class xlsSetting extends AppCompatActivity {
             /* jxl encoding setting : utf-8 */
             WorkbookSettings ws = new WorkbookSettings();
             ws.setEncoding("Cp1252");
-            workbook = Workbook.getWorkbook(file, ws);
+            // 이미 writableWorkbook 을 사용하고 있었네..
+            writableWorkbook = Workbook.getWorkbook(file, ws);
 
             // 엑셀 파일의 첫 번째 시트 인식
-            sheet = workbook.getSheet(0);
+            sheet = writableWorkbook.getSheet(0);
 
             // 불러온 엑셀 데이터의 최대 행, 열 값
             xls_row_max_count = sheet.getRows();
             xls_col_max_count = sheet.getColumns();
-            Log.d("xls_row_max_count", Integer.toString(sheet.getRows()));
-            Log.d("xls_col_max_count", Integer.toString(sheet.getColumns()));
 
             // xls 데이터를 담을 array 객체 생성
             excelArray = new String[xls_row_max_count][xls_col_max_count];
 
             for (int row = 0; row < xls_row_max_count; row++) {
                 for (int col = 0; col < xls_col_max_count; col++) {
-                    Log.d("table row", Integer.toString(row));
-                    Log.d("table col", Integer.toString(col));
                     // getCell 은 열, 행 순 (좌표 개념)
                     String cell_value = sheet.getCell(col, row).getContents();
                     excelArray[row][col] = cell_value;
@@ -700,7 +643,6 @@ public class xlsSetting extends AppCompatActivity {
             // 병합 셀 Range 객체 range 에 저장
             range = sheet.getMergedCells();
             userRange = new userRange[range.length];
-            Log.d("range length", Integer.toString(range.length));
 
             int count = 0;
             for (Range rg : range) {
@@ -718,25 +660,84 @@ public class xlsSetting extends AppCompatActivity {
         } catch (BiffException e) {
             e.printStackTrace();
         } finally {
-            workbook.close();
+            writableWorkbook.close();
         }
     }
 
-    public void Recode_Recent_Excel() {
-        /*
+    Workbook wb;
+    public void Recent_Database(String fileName, String filePath, int row_start, int col_start) {
+        WritableWorkbook writableWorkbook = null;
+        WritableSheet excelSheet = null;
+        String saveFile = "Recent.xls";
+        String saveFolder = "/Table Filter";
+        String sheetName = "Sheet";
         try {
-            // 엑셀 파일 열기 --------------------------------------
-            InputStream inputStream = getBaseContext().getResources().getAssets().open(fileName);
+            File saveFolderPath = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + saveFolder);
 
-            // 파일이 없는 경우 생성, 있는 경우 예외 처리 필요
+            if (!saveFolderPath.exists()) {
+                saveFolderPath.mkdir();
+            }
+
+            File file = new File(saveFolderPath, saveFile);
+
+            /* 일반 워크북을 하나 사용해서 먼저 읽은 다음, WritableWorkBook에 경로명과 함께 작성해주면
+             기존의 파일에 이어서 작성이 가능하다고 하다. 무슨 차이길래? */
+            try{
+                wb = Workbook.getWorkbook(file); // wb is WorkBook
+                writableWorkbook = Workbook.createWorkbook(file, wb);
+            } catch (FileNotFoundException e){
+                writableWorkbook = Workbook.createWorkbook(file);
+            }
+
+            // 만약 시트가 하나도 없다면 0번째 시트를 생성, 그렇지 않다면 해당 sheet 를 선택한다.
+            if(writableWorkbook.getNumberOfSheets() == 0) {
+                excelSheet = writableWorkbook.createSheet(sheetName, 0);
+            }
+            else {
+                excelSheet = writableWorkbook.getSheet(sheetName);
+            }
+
+            String data[] = new String[]
+                    {fileName, filePath, Integer.toString(row_start), Integer.toString(col_start)};
+
+            int xls_row_max_count = excelSheet.getRows();
+
+            // 만약 같은 파일이름의 항목이 있다면 해당 행에 덮어쓰기한다.
+            int existRow = 0;
+            boolean existFlag = false;
+            for (int row = 0; row < xls_row_max_count; row++){
+                if(fileName.equals(excelSheet.getCell(0, row).getContents())){
+                    existRow = excelSheet.getCell(0, row).getRow();
+                    existFlag = true;
+                }
+            }
+
+            if(existFlag == true){
+                for (int col = 0; col < 4; col++) {
+                    Label label = new Label(col, existRow, data[col]);
+                    excelSheet.addCell(label);
+                }
+            }
+            else{
+                for (int col = 0; col < 4; col++) {
+                    Label label = new Label(col, xls_row_max_count, data[col]);
+                    excelSheet.addCell(label);
+                }
+            }
+
+            if(wb != null){
+                wb.close();
+            }
+
+            writableWorkbook.write();
+            writableWorkbook.close();
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (WriteException e) {
+            e.printStackTrace();
         } catch (BiffException e) {
             e.printStackTrace();
-        } finally {
-            workbook.close();
         }
-        */
     }
 }

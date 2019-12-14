@@ -2,27 +2,21 @@ package com.test.tablefilter;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import javax.xml.transform.Result;
 
 import jxl.Range;
 import jxl.Sheet;
@@ -42,7 +36,7 @@ public class searchActivity extends AppCompatActivity {
     Button btnSearch;
     Button btnHome;
     TextView tvStatus; // tvTitle 은 키보드의 포커스를 맞추기 위해서 선언
-    ListView result_ResultList;
+    ListView resultListview;
     AutoCompleteTextView autoCompleteTextView;
 
     InputMethodManager imm;
@@ -75,17 +69,13 @@ public class searchActivity extends AppCompatActivity {
 
         btnSearch = (Button) findViewById(R.id.buttonSearch);
         tvStatus = (TextView) findViewById(R.id.tvStatus);
-        result_ResultList = (ListView) findViewById(R.id.result_list);
+        resultListview = (ListView) findViewById(R.id.result_list);
         autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
 
         // 출력 데이터를 저장하게 되는 리스트
         ResultList = new ArrayList<>();
         // 검색어 데이터를 저장하는 리스트
         SearchList = new ArrayList<>();
-
-        // 리스트뷰와 리스트를 연결하기 위해 사용되는 어댑터
-        /* ResultListviewAdapter ResultAdapter = new ResultListviewAdapter(this,
-                R.layout.result_row, ResultList); search_Excel 메소드로 이동 */
 
         ArrayAdapter<String> SearchAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, SearchList);
@@ -96,7 +86,7 @@ public class searchActivity extends AppCompatActivity {
         // 리스트뷰와 자동완성 텍스트 뷰의 어댑터를 지정해준다.
         // 자동완성 텍스트 뷰는 excel 파일에서 불러온 데이터를 1회성으로 리스트에 저장해 연결하지만,
         // 값을 검색했을 때 결과를 저장해주는 arraylist 는 매번 연결이 필요하다. 따라서 search_Excel 메소드로 이동
-        /* result_ResultList.setAdapter(ResultAdapter); search_Excel 메소드로 이동 */
+        /* resultListview.setAdapter(ResultAdapter); search_Excel 메소드로 이동 */
         autoCompleteTextView.setAdapter(SearchAdapter);
 
         // 검색어 중 하나를 랜덤으로 선택해 hint 로 추가
@@ -133,9 +123,7 @@ public class searchActivity extends AppCompatActivity {
 
             // 엑셀파일의 테이블 좌표
             row_start = intent.getExtras().getInt("row_start");
-            //row_end = intent.getExtras().getInt("row_end");
             col_start = intent.getExtras().getInt("col_start");
-            //col_end = intent.getExtras().getInt("col_end");
 
             File file = new File(filePath);
 
@@ -155,16 +143,12 @@ public class searchActivity extends AppCompatActivity {
             // 불러온 엑셀 데이터의 최대 행, 열 값
             xls_row_max_count = sheet.getRows();
             xls_col_max_count = sheet.getColumns();
-            Log.d("xls_row_max_count", Integer.toString(sheet.getRows()));
-            Log.d("xls_col_max_count", Integer.toString(sheet.getColumns()));
 
             // xls 데이터를 담을 array 객체 생성
             excelArray = new String[xls_row_max_count][xls_col_max_count];
 
             for (int row = 0; row < xls_row_max_count; row++) {
                 for (int col = 0; col < xls_col_max_count; col++) {
-                    Log.d("table row", Integer.toString(row));
-                    Log.d("table col", Integer.toString(col));
                     // getCell 은 열, 행 순 (좌표 개념)
                     String cell_value = sheet.getCell(col, row).getContents();
                     excelArray[row][col] = cell_value;
@@ -223,12 +207,6 @@ public class searchActivity extends AppCompatActivity {
                             // mergeRow 와 mergeCol 은 count 개념, getRow 와 getColumn 은 셀 개념 : 반대
                             for(int mergeRow = userRange.getTopLeftRow(); mergeRow <= userRange.getBottomRightRow(); mergeRow++){
                                 for(int mergeCol = userRange.getTopLeftColumn(); mergeCol <= userRange.getBottomRightColumn(); mergeCol++){
-                                   /*
-                                  Log.d("mergeRow", Integer.toString(mergeRow));
-                                  Log.d("mergevs", Integer.toString(row));
-                                  Log.d("mergeCol", Integer.toString(mergeCol));
-                                  Log.d("mergevs", Integer.toString(col));
-                                    */
                                     if(mergeRow == row_start && mergeCol == col){
                                         colItem = userRange.getTopLeftContents();
                                     }
@@ -243,12 +221,6 @@ public class searchActivity extends AppCompatActivity {
                            // mergeRow 와 mergeCol 은 count 개념, getRow 와 getColumn 은 셀 개념 : 반대
                            for(int mergeRow = userRange.getTopLeftRow(); mergeRow <= userRange.getBottomRightRow(); mergeRow++){
                                for(int mergeCol = userRange.getTopLeftColumn(); mergeCol <= userRange.getBottomRightColumn(); mergeCol++){
-                                   /*
-                                  Log.d("mergeRow", Integer.toString(mergeRow));
-                                  Log.d("mergevs", Integer.toString(row));
-                                  Log.d("mergeCol", Integer.toString(mergeCol));
-                                  Log.d("mergevs", Integer.toString(col));
-                                    */
                                   if(mergeRow == row && mergeCol == col){
                                       colValue = userRange.getTopLeftContents();
                                   }
@@ -257,11 +229,7 @@ public class searchActivity extends AppCompatActivity {
                        }
                     }
 
-                    Log.d("colItem", colItem);
-                    Log.d("colValue", colValue);
                     ResultListviewItem resultItem = new ResultListviewItem(colItem, colValue);
-                    Log.d("colResultItem", resultItem.getColItem());
-                    Log.d("colResultValue", resultItem.getColValue());
                     ResultList.add(resultItem);
                 }
                 tvStatus.setText("항목을 찾았습니다.");
@@ -274,11 +242,6 @@ public class searchActivity extends AppCompatActivity {
 
         ResultListviewAdapter ResultAdapter = new ResultListviewAdapter(this,
                 R.layout.result_row, ResultList);
-        result_ResultList.setAdapter(ResultAdapter);
-
-        for(int i = 0; i < ResultList.size(); i++){
-            Log.d("resultListItem", ResultList.get(i).getColItem());
-            Log.d("resultListItem", ResultList.get(i).getColValue());
-        }
+        resultListview.setAdapter(ResultAdapter);
     }
 }

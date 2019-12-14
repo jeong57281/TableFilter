@@ -8,7 +8,7 @@
                 android:radius="1000dp"
                 />
             <solid
-                android:color="@color/pastelPurple"
+                android:color="@color/pastelOrange"
                 />
         </shape>
     </item>

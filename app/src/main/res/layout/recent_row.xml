@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:background="@drawable/result_list_node_shape"
+    android:descendantFocusability="blocksDescendants" >
+
+    <TextView
+        android:id="@+id/tv_recentFileName"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_weight="5"
+        android:gravity="left|center"
+        android:layout_marginLeft="15dp"
+        android:singleLine="true"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/recentDeleteBtn"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_weight="1"
+        android:layout_marginRight="10dp"
+        android:layout_gravity="center"
+        android:text="삭제"
+        android:background="@drawable/delete_button_shape"/>
+
+</LinearLayout>
