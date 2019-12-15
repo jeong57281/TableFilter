@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.test.tablefilter">
+    package="com.test.tablefilter"
+    android:versionCode="1"
+    android:versionName="1.1.0"
+    >
 
     <!-- 외장 메모리 접근을 위한 permission -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -10,7 +13,8 @@
         android:icon="@drawable/table_filter_main"
         android:label="Table Filter"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme"
+        >
 
         <!--
         android:icon="@mipmap/ic_launcher"

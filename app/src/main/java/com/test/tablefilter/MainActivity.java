@@ -1,18 +1,25 @@
 package com.test.tablefilter;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -21,30 +28,90 @@ import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 
 import jxl.Sheet;
 import jxl.Workbook;
 import jxl.read.biff.BiffException;
+import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 
 public class MainActivity extends AppCompatActivity implements RecentListviewAdapter.ListBtnClickListener {
 
+    // 최근목록 listview
     ListView recent_list;
-
     ArrayList<RecentListviewItem> RecentList;
 
+    // 최근목록 클릭 시 전달 param
     String filePath;
     int row_start;
     int col_start;
+
+    // dialog
+    Dialog dialog;
+
+    // 최근 목록 삭제 시 전달되는 listview position 값
+    int delete_position;
+
+    // 첫 실행되는 sample file 을 위한 변수
+    String version;
+    String check_version, check_status;
+
+    Workbook wb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // ------------------------------------------------------------------------------
+        // 첫 실행시에만 sample file 을 마련 - version 차이를 이용
+        try {
+            PackageInfo i = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = i.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            version = "";
+        }
+
+        SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString("check_version", version);
+
+        editor.commit();
+
+        check_version = pref.getString("check_version", "");
+        check_status = pref.getString("check_status", "");
+
+        if(!check_version.equals(check_status)){
+            Create_Sample_File();
+        }
+        // ------------------------------------------------------------------------------
+        // 최근목록 삭제 dialog
+        dialog = new Dialog(this, R.style.Dialog);
+        dialog.setContentView(R.layout.confirm_dialog);
+
+        Button confirm_OKBtn = (Button) dialog.findViewById(R.id.confirm_OkBtn);
+        confirm_OKBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Delete_Recent_List(delete_position);
+                Create_Recent_List();
+                dialog.cancel();
+            }
+        });
+
+        Button confirm_CancelBtn = (Button) dialog.findViewById(R.id.confirm_CancelBtn);
+        confirm_CancelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.cancel();
+            }
+        });
+
         // ------------------------------------------------------------------------------
         /* Storage READ 권한 획득
         api 23 이하에서는 항상 권한이 부여되므로 필요가 없다. */
@@ -101,37 +168,126 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
         // ------------------------------------------------------------------------------
     }
 
-    //사용자에게 권한요청 요구를 위한 다이어로그를 생성
-    public void CALLDialog() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+    // sample file 어플 첫 실행시에만 sample file 마련
+    public void Create_Sample_File(){
+        // ------------------------------------------------------------------------------
+        // 공통
+        String saveFolder = "/Table Filter";
+        String exampleSaveFolder = "/example";
 
-        alertDialog.setTitle("앱 권한");
-        alertDialog.setMessage("해당 앱의 원할한 기능을 이용하시려면 애플리케이션 정보>권한> 에서 모든 권한을 허용해 주십시오");
+        // Recent.xls 기록을 위한 변수
+        WritableWorkbook writableWorkbook = null;
+        WritableSheet excelSheet = null;
+        String sheetName = "Sheet";
+        String sheetFile = "Recent.xls";
 
-        alertDialog.setPositiveButton("권한설정",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).
-                                setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
-                        startActivity(intent);
-                        dialog.cancel();
-                    }
-                });
-        alertDialog.setNegativeButton("취소",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
+        // asset 파일 복사를 위한 변수
+        AssetManager assetManager = getAssets();
+        String[] assets;
+        InputStream is = null;
+        FileOutputStream fos = null;
+        byte[] buf = new byte[1024];
 
-        alertDialog.show();
-    }
+        try{
+            // Table Filter, Table Filter/example 폴더 생성
+            File saveFolderPath = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                    + saveFolder);
 
-    // Adapter 에서 구현한 row item 의 버튼 리스너
-    @Override
-    public void onListBtnClick(int position) {
-        Delete_Recent_List(position);
-        Create_Recent_List();
+            if (!saveFolderPath.exists()) {
+                saveFolderPath.mkdir();
+            }
+
+            File exampleSaveFolderPath = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                    + saveFolder
+                    + exampleSaveFolder);
+
+            if (!exampleSaveFolderPath.exists()) {
+                exampleSaveFolderPath.mkdir();
+            }
+
+            File excelfile = new File(saveFolderPath, sheetFile);
+
+            // asset 폴더의 모든 파일을 list 로 저장
+            assets = assetManager.list("example");
+
+            for(String element : assets){
+                // 복사할 asset 파일 설정
+                File copyfile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                        + saveFolder
+                        + exampleSaveFolder, element);
+
+                // open 함수를 사용할 때, 맨 앞 / 는 생략해야 한다.
+                is = assetManager.open("example/" + element);
+                fos = new FileOutputStream(copyfile);
+
+                while(is.read(buf) > 0){
+                    fos.write(buf);
+                }
+
+                fos.close();
+                is.close();
+            }
+
+            // Recent.xls 기록
+            try{
+                wb = Workbook.getWorkbook(excelfile); // wb is WorkBook
+                writableWorkbook = Workbook.createWorkbook(excelfile, wb);
+            } catch (FileNotFoundException e){
+                writableWorkbook = Workbook.createWorkbook(excelfile);
+            }
+
+            if(writableWorkbook.getNumberOfSheets() == 0) {
+                excelSheet = writableWorkbook.createSheet(sheetName, 0);
+            }
+            else {
+                excelSheet = writableWorkbook.getSheet(sheetName);
+            }
+
+            int count = 0;
+            int[][] index = {{4, 2}, {2, 2}, {4, 1}, {3, 1}};
+            for(String element : assets) {
+                String data[] = new String[]
+                        {element, Environment.getExternalStorageDirectory().getAbsolutePath()
+                                + saveFolder
+                                + exampleSaveFolder
+                                + "/" + element, Integer.toString(index[count][0]), Integer.toString(index[count][1])};
+
+                int xls_row_max_count = excelSheet.getRows();
+
+                for (int col = 0; col < 4; col++) {
+                    Label label = new Label(col, xls_row_max_count, data[col]);
+                    excelSheet.addCell(label);
+                }
+                count++;
+            }
+
+            if(wb != null){
+                wb.close();
+            }
+
+            writableWorkbook.write();
+            writableWorkbook.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (BiffException e){
+            e.printStackTrace();
+        } catch (WriteException e) {
+            e.printStackTrace();
+        }
+        // ------------------------------------------------------------------------------
+        // 실행 시, 현재 어플리케이션의 버전을 저장
+        try {
+            PackageInfo i = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = i.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            version = "";
+        }
+
+        SharedPreferences pref = getSharedPreferences("pref", Activity.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString("check_status", version);
+        editor.commit();
     }
 
     public boolean Read_Recent_File(int position){
@@ -168,7 +324,6 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
         return true; // 정상적일 경우 true 반환
     }
 
-    Workbook wb;
     public void Delete_Recent_List(int position){
         WritableWorkbook writableWorkbook = null;
         WritableSheet excelSheet = null;
@@ -201,6 +356,7 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
                 excelSheet = writableWorkbook.getSheet(sheetName);
             }
 
+            // 최근목록 삭제 부분
             excelSheet.removeRow(position);
 
             if(wb != null){
@@ -257,5 +413,48 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
         } catch (BiffException e) {
             e.printStackTrace();
         }
+    }
+
+    // 사용자에게 권한요청 요구를 위한 다이어로그를 생성
+    public void CALLDialog() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+
+        alertDialog.setTitle("앱 권한");
+        alertDialog.setMessage("해당 앱의 원할한 기능을 이용하시려면 애플리케이션 정보>권한> 에서 모든 권한을 허용해 주십시오");
+
+        alertDialog.setPositiveButton("권한설정",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).
+                                setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
+                        startActivity(intent);
+                        dialog.cancel();
+                    }
+                });
+        alertDialog.setNegativeButton("취소",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+        alertDialog.show();
+    }
+
+    public void Confirm_Delete_List(int position){
+        TextView tv_confirmTitle = (TextView) dialog.findViewById(R.id.tv_confirmTitle);
+        tv_confirmTitle.setText("최근목록 삭제");
+
+        TextView tv_confirmMainText = (TextView) dialog.findViewById(R.id.tv_confirmMainText);
+        tv_confirmMainText.setText("최근목록에서 '" + RecentList.get(position).getRecentFileName() + "'을 삭제하시겠습니까?");
+
+        dialog.show();
+    }
+
+    // Adapter 에서 구현한 row item 의 버튼 리스너
+    @Override
+    public void onListBtnClick(int position) {
+        delete_position = position;
+        Confirm_Delete_List(position);
     }
 }
