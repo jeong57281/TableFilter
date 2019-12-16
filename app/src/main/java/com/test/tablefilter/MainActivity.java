@@ -41,7 +41,7 @@ import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
 import jxl.write.WriteException;
 
-public class MainActivity extends AppCompatActivity implements RecentListviewAdapter.ListBtnClickListener {
+public class MainActivity extends AppCompatActivity implements RecentListviewAdapter.ListBtnClickListener{
 
     // 최근목록 listview
     ListView recent_list;
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
     int col_start;
 
     // dialog
-    Dialog dialog;
+    Dialog dialog, sample_dialog;
 
     // 최근 목록 삭제 시 전달되는 listview position 값
     int delete_position;
@@ -68,6 +68,18 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        RecentList = new ArrayList<>();
+
+        // ------------------------------------------------------------------------------
+        /* Storage READ 권한 획득
+        api 23 이하에서는 항상 권한이 부여되므로 필요가 없다. */
+        if(Build.VERSION.SDK_INT > 23){
+            requestPermissions(new String[]
+                            {Manifest.permission.READ_EXTERNAL_STORAGE,
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    2);
+        }
         // ------------------------------------------------------------------------------
         // 첫 실행시에만 sample file 을 마련 - version 차이를 이용
         try {
@@ -85,10 +97,46 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
 
         check_version = pref.getString("check_version", "");
         check_status = pref.getString("check_status", "");
+        // ------------------------------------------------------------------------------
+        // sample 을 추가할 것인지 묻는 dialog
+
+        sample_dialog = new Dialog(this, R.style.Dialog);
+        sample_dialog.setContentView(R.layout.sample_dialog);
 
         if(!check_version.equals(check_status)){
-            Create_Sample_File();
+            TextView tv_sampleTitle = (TextView) sample_dialog.findViewById(R.id.tv_sampleTitle);
+            tv_sampleTitle.setText("샘플 추가");
+
+            TextView tv_sampleMainText = (TextView) sample_dialog.findViewById(R.id.tv_sampleMainText);
+            tv_sampleMainText.setText("샘플 파일을 추가하시겠습니까?");
+
+            sample_dialog.show();
         }
+
+        Button sample_OKBtn = (Button) sample_dialog.findViewById(R.id.sample_OkBtn);
+        sample_OKBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int permissionStorageRead = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
+                int permissionStorageWrit = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                if(permissionStorageRead == PackageManager.PERMISSION_DENIED && permissionStorageWrit == PackageManager.PERMISSION_DENIED){
+                    CALLDialog();
+                }
+                else{
+                    Create_Sample_File();
+                    Create_Recent_List();
+                }
+                sample_dialog.cancel();
+            }
+        });
+
+        Button sample_CancelBtn = (Button) sample_dialog.findViewById(R.id.sample_CancelBtn);
+        sample_CancelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sample_dialog.cancel();
+            }
+        });
         // ------------------------------------------------------------------------------
         // 최근목록 삭제 dialog
         dialog = new Dialog(this, R.style.Dialog);
@@ -111,24 +159,9 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
                 dialog.cancel();
             }
         });
-
         // ------------------------------------------------------------------------------
-        /* Storage READ 권한 획득
-        api 23 이하에서는 항상 권한이 부여되므로 필요가 없다. */
-        if(Build.VERSION.SDK_INT > 23){
-            requestPermissions(new String[]
-                            {Manifest.permission.READ_EXTERNAL_STORAGE,
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    2);
-        }
-        // ------------------------------------------------------------------------------
-        // 출력 데이터를 저장하게 되는 리스트
-        RecentList = new ArrayList<>();
-
+        // 최근 목록 클릭 시 동작
         recent_list = (ListView) findViewById(R.id.recent_list);
-
-        Create_Recent_List();
-
         recent_list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -150,6 +183,7 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
             }
         });
         // ------------------------------------------------------------------------------
+        // xls 불러오기 시 권한 체크
         Button file_btn = (Button) findViewById(R.id.file_button);
         file_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -166,6 +200,8 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
             }
         });
         // ------------------------------------------------------------------------------
+        // 메인 페이지(activity_main)가 새로 호출될 경우 최근목록 업데이트
+        Create_Recent_List();
     }
 
     // sample file 어플 첫 실행시에만 sample file 마련

@@ -5,7 +5,7 @@
     android:orientation="vertical" >
 
     <TextView
-        android:id="@+id/tv_confirmTitle"
+        android:id="@+id/tv_sampleTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="20sp"
@@ -20,7 +20,7 @@
     </View>
 
     <TextView
-        android:id="@+id/tv_confirmMainText"
+        android:id="@+id/tv_sampleMainText"
         android:layout_width="match_parent"
         android:layout_height="75dp"
         android:gravity="center"
@@ -38,7 +38,7 @@
         android:layout_height="wrap_content" >
 
         <Button
-            android:id="@+id/confirm_CancelBtn"
+            android:id="@+id/sample_CancelBtn"
             android:text="취소"
             android:textColor="@color/black"
             android:background="#fff"
@@ -54,7 +54,7 @@
         </View>
 
         <Button
-            android:id="@+id/confirm_OkBtn"
+            android:id="@+id/sample_OkBtn"
             android:text="확인"
             android:textColor="@color/black"
             android:background="#fff"
