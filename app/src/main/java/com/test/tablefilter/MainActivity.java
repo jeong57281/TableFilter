@@ -254,10 +254,29 @@ public class MainActivity extends AppCompatActivity implements RecentListviewAda
 
                 int xls_row_max_count = excelSheet.getRows();
 
-                for (int col = 0; col < 4; col++) {
-                    Label label = new Label(col, xls_row_max_count, data[col]);
-                    excelSheet.addCell(label);
+                // 만약 같은 파일이름의 항목이 있다면 해당 행에 덮어쓰기한다.
+                int existRow = 0;
+                boolean existFlag = false;
+                for (int row = 0; row < xls_row_max_count; row++){
+                    if(element.equals(excelSheet.getCell(0, row).getContents())){
+                        existRow = excelSheet.getCell(0, row).getRow();
+                        existFlag = true;
+                    }
                 }
+
+                if(existFlag == true){
+                    for (int col = 0; col < 4; col++) {
+                        Label label = new Label(col, existRow, data[col]);
+                        excelSheet.addCell(label);
+                    }
+                }
+                else{
+                    for (int col = 0; col < 4; col++) {
+                        Label label = new Label(col, xls_row_max_count, data[col]);
+                        excelSheet.addCell(label);
+                    }
+                }
+
                 count++;
             }
 
